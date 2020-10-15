@@ -30,6 +30,7 @@
     "webpack-dev-server": "^3.8.0"
   },
   "scripts": {
+    "dev": "webpack-dev-server",
     "build": "webpack --mode=production",
     "build:dev": "webpack --mode=development",
     "test": "jest"
