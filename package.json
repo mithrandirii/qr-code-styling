@@ -7,7 +7,7 @@
     "lib"
   ],
   "dependencies": {
-    "@mithrandirii/canvas2svg": "^1.0.23",
+    "@mithrandirii/canvas2svg": "^1.0.24",
     "qrcode-generator": "^1.4.3"
   },
   "devDependencies": {
