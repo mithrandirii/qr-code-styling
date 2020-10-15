@@ -65,6 +65,20 @@ export default class QRCodeStyling {
     });
   }
 
+  getSerializedSvg(): Promise<string> | undefined {
+    if (!this._drawingPromise) {
+      return;
+    }
+
+    return this._drawingPromise.then(() => {
+      if (this._canvas && this._canvas.context) {
+        return this._canvas.context.getSerializedSvg(false);
+      }
+
+      return "";
+    });
+  }
+
   // download(downloadOptions?: Partial<DownloadOptions> | string): void {
   //   if (!this._drawingPromise) return;
 
