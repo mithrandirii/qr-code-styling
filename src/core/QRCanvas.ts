@@ -166,6 +166,14 @@ export default class QRCanvas {
             );
           });
 
+          if (options.imageOptions.imageColor) {
+            const paths = svg.getElementsByTagName("path");
+            const lPath = paths[paths.length - 1];
+            if (lPath) {
+              lPath.setAttribute("fill", options.imageOptions.imageColor);
+            }
+          }
+
           canvasContext.drawImageSvg(
             svg,
             xBeginning + (count * dotSize - width) / 2,

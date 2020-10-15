@@ -15,6 +15,7 @@ export type Options = {
     hideBackgroundDots: boolean;
     imageSize: number;
     crossOrigin?: string;
+    imageColor?: string;
   };
   dotsOptions: {
     type: DotType;
