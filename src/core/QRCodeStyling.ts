@@ -1,14 +1,14 @@
 import getMode from "../tools/getMode";
 import mergeDeep from "../tools/merge";
-import downloadURI from "../tools/downloadURI";
+//import downloadURI from "../tools/downloadURI";
 import QRCanvas from "./QRCanvas";
 import defaultOptions, { Options } from "./QROptions";
 import qrcode from "qrcode-generator";
 
-type DownloadOptions = {
-  name?: string;
-  extension?: Extension;
-};
+// type DownloadOptions = {
+//   name?: string;
+//   extension?: Extension;
+// };
 
 export default class QRCodeStyling {
   _options: Options;
@@ -41,7 +41,6 @@ export default class QRCodeStyling {
     this._qr.make();
     this._canvas = new QRCanvas(this._options);
     this._drawingPromise = this._canvas.drawQR(this._qr);
-    this.append(this._container);
   }
 
   append(container?: HTMLElement): void {
@@ -53,39 +52,45 @@ export default class QRCodeStyling {
       throw "Container should be a single DOM node";
     }
 
-    if (this._canvas) {
-      container.appendChild(this._canvas.getCanvas());
+    if (!this._drawingPromise) {
+      return;
     }
 
-    this._container = container;
-  }
-
-  download(downloadOptions?: Partial<DownloadOptions> | string): void {
-    if (!this._drawingPromise) return;
-
     this._drawingPromise.then(() => {
-      if (!this._canvas) return;
-
-      let extension = "png";
-      let name = "qr";
-
-      //TODO remove deprecated code in the v2
-      if (typeof downloadOptions === "string") {
-        extension = downloadOptions;
-        console.warn(
-          "Extension is deprecated as argument for 'download' method, please pass object { name: '...', extension: '...' } as argument"
-        );
-      } else if (typeof downloadOptions === "object" && downloadOptions !== null) {
-        if (downloadOptions.name) {
-          name = downloadOptions.name;
-        }
-        if (downloadOptions.extension) {
-          extension = downloadOptions.extension;
-        }
+      if (this._canvas && this._canvas.context) {
+        container.innerHTML = this._canvas.context.getSerializedSvg(false);
       }
 
-      const data = this._canvas.getCanvas().toDataURL(`image/${extension}`);
-      downloadURI(data, `${name}.${extension}`);
+      this._container = container;
     });
   }
+
+  // download(downloadOptions?: Partial<DownloadOptions> | string): void {
+  //   if (!this._drawingPromise) return;
+
+  //   this._drawingPromise.then(() => {
+  //     if (!this._canvas) return;
+
+  //     let extension = "png";
+  //     let name = "qr";
+
+  //     //TODO remove deprecated code in the v2
+  //     if (typeof downloadOptions === "string") {
+  //       extension = downloadOptions;
+  //       console.warn(
+  //         "Extension is deprecated as argument for 'download' method, please pass object { name: '...', extension: '...' } as argument"
+  //       );
+  //     } else if (typeof downloadOptions === "object" && downloadOptions !== null) {
+  //       if (downloadOptions.name) {
+  //         name = downloadOptions.name;
+  //       }
+  //       if (downloadOptions.extension) {
+  //         extension = downloadOptions.extension;
+  //       }
+  //     }
+
+  //     const data = this._canvas.getCanvas().toDataURL(`image/${extension}`);
+  //     downloadURI(data, `${name}.${extension}`);
+  //   });
+  //}
 }

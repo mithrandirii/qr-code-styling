@@ -2,44 +2,41 @@ import calculateImageSize from "../tools/calculateImageSize";
 import errorCorrectionPercents from "../constants/errorCorrectionPercents";
 import QRDot from "./QRDot";
 import { Options } from "./QROptions";
+import C2S, { SVGRenderingContext2D } from "@mithrandirii/canvas2svg";
 
 type FilterFunction = (i: number, j: number) => boolean;
 
 export default class QRCanvas {
-  _canvas: HTMLCanvasElement;
+  _ctx: SVGRenderingContext2D;
   _options: Options;
   _qr?: QRCode;
-  _image?: HTMLImageElement;
 
   //TODO don't pass all options to this class
   constructor(options: Options) {
-    this._canvas = document.createElement("canvas");
-    this._canvas.width = options.width;
-    this._canvas.height = options.height;
+    this._ctx = new C2S({
+      width: options.width,
+      height: options.height
+    });
     this._options = options;
   }
 
-  get context(): CanvasRenderingContext2D | null {
-    return this._canvas.getContext("2d");
+  get context(): SVGRenderingContext2D | null {
+    return this._ctx;
   }
 
   get width(): number {
-    return this._canvas.width;
+    return this._options.width;
   }
 
   get height(): number {
-    return this._canvas.height;
-  }
-
-  getCanvas(): HTMLCanvasElement {
-    return this._canvas;
+    return this._options.height;
   }
 
   clear(): void {
     const canvasContext = this.context;
 
     if (canvasContext) {
-      canvasContext.clearRect(0, 0, this._canvas.width, this._canvas.height);
+      canvasContext.clearRect(0, 0, this._options.width, this._options.height);
     }
   }
 
@@ -62,7 +59,7 @@ export default class QRCanvas {
 
     if (canvasContext) {
       canvasContext.fillStyle = options.backgroundOptions.color;
-      canvasContext.fillRect(0, 0, this._canvas.width, this._canvas.height);
+      canvasContext.fillRect(0, 0, this._options.width, this._options.height);
     }
   }
 
@@ -131,7 +128,6 @@ export default class QRCanvas {
       const dotSize = Math.floor(minSize / count);
       const xBeginning = Math.floor((options.width - count * dotSize) / 2);
       const yBeginning = Math.floor((options.height - count * dotSize) / 2);
-      const image = new Image();
       const coverLevel =
         options.imageOptions.imageSize * errorCorrectionPercents[options.qrOptions.errorCorrectionLevel];
 
@@ -139,44 +135,48 @@ export default class QRCanvas {
         return reject("Image is not defined");
       }
 
-      if (typeof options.imageOptions.crossOrigin === "string") {
-        image.crossOrigin = options.imageOptions.crossOrigin;
-      }
+      return fetch(options.image)
+        .then(res => res.text())
+        .then(data => {
+          const parser = new DOMParser();
+          const svg = parser.parseFromString(data, "image/svg+xml").querySelector("svg");
 
-      this._image = image;
-      //TODO remove it from this place
-      image.onload = (): void => {
-        const maxHiddenDots = Math.floor(coverLevel * count * count);
-        const { width, height, hideXDots, hideYDots } = calculateImageSize({
-          originalWidth: image.width,
-          originalHeight: image.height,
-          maxHiddenDots,
-          maxHiddenAxisDots: count - 14,
-          dotSize
-        });
-
-        this.drawDots((i: number, j: number): boolean => {
-          if (!options.imageOptions.hideBackgroundDots) {
-            return true;
+          if (!svg) {
+            throw "no svg found on given src";
           }
-          return (
-            i < (count - hideXDots) / 2 ||
-            i >= (count + hideXDots) / 2 ||
-            j < (count - hideYDots) / 2 ||
-            j >= (count + hideYDots) / 2
-          );
-        });
 
-        canvasContext.drawImage(
-          image,
-          xBeginning + (count * dotSize - width) / 2,
-          yBeginning + (count * dotSize - height) / 2,
-          width,
-          height
-        );
-        resolve();
-      };
-      image.src = options.image;
+          const maxHiddenDots = Math.floor(coverLevel * count * count);
+          const { width, height, hideXDots, hideYDots } = calculateImageSize({
+            originalWidth: parseFloat(svg.getAttribute("width") || "64"),
+            originalHeight: parseFloat(svg.getAttribute("height") || "64"),
+            maxHiddenDots,
+            maxHiddenAxisDots: count - 14,
+            dotSize
+          });
+
+          this.drawDots((i: number, j: number): boolean => {
+            if (!options.imageOptions.hideBackgroundDots) {
+              return true;
+            }
+            return (
+              i < (count - hideXDots) / 2 ||
+              i >= (count + hideXDots) / 2 ||
+              j < (count - hideYDots) / 2 ||
+              j >= (count + hideYDots) / 2
+            );
+          });
+
+          canvasContext.drawImageSvg(
+            svg,
+            xBeginning + (count * dotSize - width) / 2,
+            yBeginning + (count * dotSize - height) / 2,
+            width,
+            height
+          );
+        })
+        .then(() => {
+          resolve();
+        });
     });
   }
 }
