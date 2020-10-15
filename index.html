@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>QR Code Styling</title>
+    <script type="text/javascript" src="qr-code-styling.js"></script>
+  </head>
+  <body>
+    <div id="svg"></div>
+    <script type="text/javascript">
+      const qrCode = new QRCodeStyling({
+        width: 400,
+        height: 400,
+        data: "https://evorhei.de/it",
+        image: "account.svg",
+        dotsOptions: {
+          color: "#006e6e",
+          type: "rounded"
+        },
+        backgroundOptions: {
+          color: "#e9ebee"
+        }
+      });
+
+      qrCode.append(document.getElementById("svg"));
+    </script>
+  </body>
+</html>
